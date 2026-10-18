@@ -370,12 +370,12 @@ const WheelOfFortune = ({ products, winningIndex }: WheelOfFortuneProps) => {
                             ${!showWinningItem ? 'scale-0 opacity-0 translate-y-full' : 'scale-100 opacity-100 translate-y-0'}
                         `}
                     >
-                        {hasSpun && !isSpinning && (
-                            <WinningItem
-                                product={products[winningIndex]}
-                                onClose={() => setIsOpen(false)}
-                            />
-                        )}
+                       {hasSpun && !isSpinning && products[winningIndex] && (
+                                        <WinningItem
+                                            product={products[winningIndex]}
+                                            onClose={() => setIsOpen(false)}
+                                        />
+                                    )}
                     </div>
 
                     <button
