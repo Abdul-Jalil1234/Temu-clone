@@ -2,7 +2,7 @@
 
 import { getCurrentSession } from "@/actions/auth";
 import prisma from "@/lib/prisma";
-import { Product } from "@/sanity.types";
+import { getProductById } from "@/sanity/lib/client";
 import { urlFor } from "@/sanity/lib/image";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
@@ -220,7 +220,18 @@ export const syncCartWithUser = async (cartId: string | null) => {
     return getOrCreateCart(existingUserCart.id);
 }
 
-export const addWinningItemToCart = async (cartId: string, product: Product) => {
+export const addWinningItemToCart = async (cartId: string, productId: string, dayKey: string) => {
+    // Server-side guard: one prize per day per browser (cookie), regardless of localStorage.
+    const cookieStore = await cookies();
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(dayKey) || cookieStore.get('wheel-claimed')?.value === dayKey) {
+        return null;
+    }
+
+    // Never trust product data from the client: re-fetch it.
+    const product = await getProductById(productId);
+    if(!product) {
+        return null;
+    }
 
     const cart = await getOrCreateCart(cartId);
 
@@ -229,6 +240,14 @@ export const addWinningItemToCart = async (cartId: string, product: Product) => 
         price: 0,
         image: product.image ? urlFor(product.image).url() : '',
         quantity: 1,
+    });
+
+    cookieStore.set('wheel-claimed', dayKey, {
+        path: '/',
+        maxAge: 60 * 60 * 36,
+        sameSite: 'lax',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
     });
 
     return updatedCart;

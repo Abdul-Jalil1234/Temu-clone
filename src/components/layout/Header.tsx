@@ -74,12 +74,11 @@ const Header = ({ user, categorySelector }: HeaderProps) => {
                             </button>
 
                             <nav className='hidden md:flex gap-4 lg:gap-6 text-sm font-medium'>
-                                {categorySelector}
-                                <Link href='#'>Sale</Link>
+                                <Link href='/#flash-deals' className='text-red-600 font-bold'>Sale</Link>
                             </nav>
                         </div>
 
-                        <Link href='#' className='absolute left-1/2 -translate-x-1/2'>
+                        <Link href='/' className='absolute left-1/2 -translate-x-1/2'>
                             <span className='text-xl sm:text-2xl font-bold tracking-tight'>DEAL</span>
                         </Link>
 
@@ -123,6 +122,8 @@ const Header = ({ user, categorySelector }: HeaderProps) => {
                         </div>
                     </div>
                 </div>
+
+                {categorySelector}
             </div>
         </header>
     );

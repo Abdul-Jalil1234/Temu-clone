@@ -1,49 +1,31 @@
 import { getAllCategories } from '@/sanity/lib/client';
 import Link from 'next/link';
-import React from 'react'
+import React from 'react';
 
+/** Horizontal, scrollable category navigation bar shown under the main header. */
 const HeaderCategorySelector = async () => {
-
     const categories = await getAllCategories();
 
-  return (
-    <div className='relative inline-block'>
-        <button className='peer group text-gray-700 hover:text-gray-900 text-sm font-medium flex items-center gap-1'>
-            Categories
-            <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                width="16" 
-                height="16" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2"
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-                className="transition-transform duration-200 group-hover:rotate-180"
-            >
-                <path d="m6 9 6 6 6-6"/>
-            </svg>
-        </button>
+    const linkClass =
+        'shrink-0 px-4 py-2 text-sm font-medium whitespace-nowrap text-gray-700 hover:text-red-600 border-b-2 border-transparent hover:border-red-500 transition-colors';
 
-        <div className='absolute top-full left-0 pt-2 opacity-0 invisible peer-hover:opacity-100 peer-hover:visible hover:opacity-100 hover:visible transition-all duration'>
-            <div className='w-64 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden'>
-                <div className='py-2'>
+    return (
+        <nav aria-label='Product categories' className='w-full bg-white border-b border-gray-100'>
+            <div className='container mx-auto px-4'>
+                <ul className='flex items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+                    <li><Link href='/' className={linkClass}>🏠 All</Link></li>
+                    <li><Link href='/#flash-deals' className={`${linkClass} !text-red-600 font-bold`}>⚡ Flash Deals</Link></li>
                     {categories.map((category) => (
-                        <Link
-                            key={category._id}
-                            href={`/category/${category.slug?.current}`}
-                            className='block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors duration-100'
-                            prefetch
-                        >
-                            {category.title}
-                        </Link>
+                        <li key={category._id}>
+                            <Link href={`/category/${category.slug?.current}`} className={linkClass} prefetch>
+                                {category.title}
+                            </Link>
+                        </li>
                     ))}
-                </div>
+                </ul>
             </div>
-        </div>
-    </div>
-  )
-}
+        </nav>
+    );
+};
 
-export default HeaderCategorySelector
+export default HeaderCategorySelector;

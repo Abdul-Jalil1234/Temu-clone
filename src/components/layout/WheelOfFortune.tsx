@@ -10,6 +10,8 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { useShallow } from 'zustand/shallow';
+import { useCountdown } from '@/hooks/useCountdown';
+import { todayKey, WHEEL_STORAGE_KEY } from '@/lib/daily';
 
 const COLORS = [
     ['#dc2626', '#ef4444'], // red gradient (deeper)
@@ -107,8 +109,11 @@ const WinningItem = ({ product, onClose }: {product: Product, onClose: () => voi
         }
         setIsAdding(true);
 
-        const updatedCart = await addWinningItemToCart(cartId, product);
-        localStorage.setItem("has-played-wheel-of-fortune", 'true');
+        const updatedCart = await addWinningItemToCart(cartId, product._id, todayKey());
+        if(!updatedCart) {
+            setIsAdding(false);
+            return;
+        }
 
         setStore(updatedCart);
         
@@ -247,23 +252,46 @@ const WheelOfFortune = ({ products, winningIndex }: WheelOfFortuneProps) => {
     const [showWinningItem, setShowWininngItem] = useState<boolean>(false);
     const [isSpinning, setIsSpinning] = useState<boolean>(false);
     const [hasSpun, setHasSpun] = useState<boolean>(false);
-    
-    const [wheelStyle, setWheelStyle] = useState<React.CSSProperties>({});
+    /** true once we know (from localStorage) that today's spin was already used */
+    const [spunToday, setSpunToday] = useState<boolean>(false);
+    const [mounted, setMounted] = useState<boolean>(false);
 
+    const [wheelStyle, setWheelStyle] = useState<React.CSSProperties>({});
+    const countdown = useCountdown();
+
+    // Daily reset: compare the stored day with today's local date, and re-check
+    // whenever the countdown rolls over to a new day.
     useEffect(() => {
-        const hasPlayed = localStorage.getItem("has-played-wheel-of-fortune");
-        if(!hasPlayed) {
-            const timer = setTimeout(() => {
-                setIsOpen(true);
-            }, 2000);
-            return () => clearTimeout(timer);
+        let last: string | null = null;
+        try { last = localStorage.getItem(WHEEL_STORAGE_KEY); } catch {}
+        const used = last === todayKey();
+        setSpunToday(used);
+        setMounted(true);
+
+        if(!used) {
+            // new day => fresh wheel
+            setHasSpun(false);
+            setShowWininngItem(false);
+            setWheelStyle({});
         }
-    });
+    }, [countdown.ready && countdown.totalMs > 86_399_000 ? 'rollover' : 'same']);
+
+    // Auto-open once per page load, only if today's spin is still available.
+    useEffect(() => {
+        if(!mounted || spunToday) {
+            return;
+        }
+        const timer = setTimeout(() => setIsOpen(true), 2000);
+        return () => clearTimeout(timer);
+    }, [mounted, spunToday]);
 
     const handleSpin = () => {
         if(isSpinning || hasSpun) {
             return;
         }
+
+        // Lock today's spin immediately so a refresh can't be used to re-roll.
+        try { localStorage.setItem(WHEEL_STORAGE_KEY, todayKey()); } catch {}
 
         setIsSpinning(true);
         setHasSpun(true);
@@ -294,7 +322,20 @@ const WheelOfFortune = ({ products, winningIndex }: WheelOfFortuneProps) => {
         })
     }
 
+    const alreadySpun = spunToday && !hasSpun;
+
     return (
+        <>
+        {mounted && (
+            <button
+                onClick={() => setIsOpen(true)}
+                className='fixed bottom-24 left-4 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-red-500 to-orange-500 px-4 py-3 text-sm font-bold text-white shadow-xl hover:scale-105 transition-transform'
+                aria-label='Open daily spin and win'
+            >
+                <span className='text-lg animate-bounce'>🎁</span>
+                {alreadySpun ? `Next spin ${countdown.label}` : 'Spin & Win'}
+            </button>
+        )}
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogContent className='sm:max-w-[800px] p-0'>
                 <DialogTitle>
@@ -310,6 +351,14 @@ const WheelOfFortune = ({ products, winningIndex }: WheelOfFortuneProps) => {
                     </div>
                 </DialogTitle>
 
+                {alreadySpun ? (
+                    <div className='flex flex-col items-center justify-center p-12 gap-4 bg-gray-50 text-center'>
+                        <div className='text-6xl'>⏳</div>
+                        <h3 className='text-xl font-bold'>You&apos;ve already spun today!</h3>
+                        <p className='text-muted-foreground'>The wheel resets every day at midnight. Come back in</p>
+                        <div className='font-mono text-4xl font-extrabold tabular-nums text-red-600'>{countdown.label}</div>
+                    </div>
+                ) : (
                 <div className='flex flex-col items-center justify-center p-8 gap-4 bg-gray-50'>
                     <div 
                         className={`
@@ -413,8 +462,10 @@ const WheelOfFortune = ({ products, winningIndex }: WheelOfFortuneProps) => {
                         )}
                     </button>
                 </div>
+                )}
             </DialogContent>
         </Dialog>
+        </>
     );
 };
 
