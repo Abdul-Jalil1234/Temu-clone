@@ -9,6 +9,7 @@ import Cart from '@/components/cart/Cart';
 import Script from 'next/script';
 import { Suspense } from 'react';
 import AnalyticsTracker from '@/components/layout/AnalyticsTracker';
+import { isAdminEmail } from '@/lib/admin';
 import ChatWidget from '@/components/chat/ChatWidget';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -30,6 +31,7 @@ const RootLayout = async ({
             <body className={`${inter.className} antialiased bg-white min-h-[125vh]`}>
                 <Header 
                     user={user}
+                    isAdmin={isAdminEmail(user?.email)}
                     categorySelector={<HeaderCategorySelector />}
                 />
                 {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (

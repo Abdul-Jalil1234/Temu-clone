@@ -21,9 +21,10 @@ const AnnouncementBar = () => {
 type HeaderProps = {
     user: Omit<User, 'passwordHash'> | null;
     categorySelector: React.ReactNode;
+    isAdmin?: boolean;
 };
 
-const Header = ({ user, categorySelector }: HeaderProps) => {
+const Header = ({ user, categorySelector, isAdmin }: HeaderProps) => {
     const router = useRouter();
 
     const [isOpen, setIsOpen] = useState<boolean>(true);
@@ -87,6 +88,9 @@ const Header = ({ user, categorySelector }: HeaderProps) => {
 
                             {user ? (
                                 <div className='flex items-center gap-2 sm:gap-4'>
+                                    {isAdmin && (
+                                        <Link href='/admin' className='text-xs sm:text-sm font-bold text-red-600 hover:underline'>Admin</Link>
+                                    )}
                                     <span className='text-sm text-gray-700 hidden md:block'>{user.email}</span>
                                     <Link
                                         href='#'

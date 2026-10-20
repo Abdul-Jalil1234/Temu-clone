@@ -11,6 +11,7 @@ The app needs four external things: **PostgreSQL**, a **Sanity** project (produc
 | `SANITY_API_READ_TOKEN` (Viewer) and `SANITY_API_WRITE_TOKEN` (Editor) | sanity.io/manage → API → Tokens |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | dashboard.stripe.com → Developers |
 | `NEXT_PUBLIC_BASE_URL` | Your final site URL, e.g. `https://shop.example.com` |
+| `ADMIN_EMAILS` | Your own email (comma-separate several). Only these accounts can open `/admin` |
 | `FASTBOT_API_KEY` | app.fastbots.ai → your bot → Settings → API key |
 
 Copy `.env.example` to `.env` and fill these in. **Never commit `.env`.**
@@ -70,6 +71,14 @@ docker run -d -p 3000:3000 --env-file .env temu-clone
 - **Daily Spin & Win** — one spin per day per browser; it resets at local midnight. The prize is chosen by date (`src/actions/wheel-of-fortune-actions.ts`), and a server cookie stops a second free prize on the same day. A floating 🎁 button reopens the wheel / shows the time until the next spin.
 - **AI chat (FastBot)** — the chat box calls `/api/chat`, which forwards to FastBot with your key server-side. Set `FASTBOT_API_KEY`; without it the chat answers "not configured". If you prefer FastBot's own widget instead, add `<script defer src="https://app.fastbots.ai/embed.js" data-bot-id="YOUR_BOT_ID"></script>` to `src/app/layout.tsx` and remove `<ChatWidget />`.
 - **Extras** — trust bar (free shipping/returns), flash-deal cards with discount badges and "% claimed" bars.
+
+## Admin dashboard (`/admin`)
+
+1. Set `ADMIN_EMAILS=you@example.com` in your environment (Vercel env vars or `.env`) and redeploy.
+2. **Sign up on the site with that exact email first** (Sign Up page). Do this right after deploying, before anyone else could register it.
+3. Sign in — an **Admin** link appears in the header. It opens: Overview (revenue, order counts), Orders (search, filter, change status, order detail), Products (edit price, delete, link to Studio to add/edit), Customers (accounts with orders and spend), and Content Studio.
+
+Security: every admin page and action re-checks on the server that the signed-in user's email is in `ADMIN_EMAILS`; everyone else gets a 404. It also needs `SANITY_API_WRITE_TOKEN` (Editor) to change orders/products.
 
 ## Troubleshooting
 
