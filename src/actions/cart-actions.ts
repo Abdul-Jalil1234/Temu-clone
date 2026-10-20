@@ -2,7 +2,8 @@
 
 import { getCurrentSession } from "@/actions/auth";
 import prisma from "@/lib/prisma";
-import { getProductById } from "@/sanity/lib/client";
+import { client as sanityReadClient } from "@/sanity/lib/base-client";
+import { Product } from "@/sanity.types";
 import { urlFor } from "@/sanity/lib/image";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
@@ -228,7 +229,10 @@ export const addWinningItemToCart = async (cartId: string, productId: string, da
     }
 
     // Never trust product data from the client: re-fetch it.
-    const product = await getProductById(productId);
+    const product = await sanityReadClient.fetch<Product | null>(
+        `*[_type == "product" && _id == $id][0]`,
+        { id: productId }
+    );
     if(!product) {
         return null;
     }
