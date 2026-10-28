@@ -63,7 +63,7 @@ const answerOrderQuestion = async (message: string): Promise<string> => {
         return "I couldn't find any orders on your account yet. If you checked out with a different email, please sign in with that one.";
     }
 
-    const wanted = message.toUpperCase().match(/\b[A-Z0-9]{8}\b/g) || [];
+    const wanted: string[] = message.toUpperCase().match(/\b[A-Z0-9]{8}\b/g) ?? [];
     const match = orders.find((o) => o.orderNumber && wanted.includes(o.orderNumber.toUpperCase()));
 
     const describe = (o: OrderRow) => {
